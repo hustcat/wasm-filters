@@ -3,6 +3,14 @@
 
 #include "proxy_wasm_intrinsics.h"
 
+class ExampleRootContext : public RootContext {
+ public:
+  explicit ExampleRootContext(uint32_t id, std::string_view root_id)
+      : RootContext(id, root_id) {}
+
+  bool onConfigure(size_t) override;
+};
+
 class ExampleContext : public Context {
 public:
   explicit ExampleContext(uint32_t id, RootContext* root) : Context(id, root) {}
@@ -12,7 +20,7 @@ public:
   FilterHeadersStatus onResponseHeaders(uint32_t headers, bool end_of_stream) override;
 
 };
-static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext));
+static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext), ROOT_FACTORY(ExampleRootContext));
 
 FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t headers, bool end_of_stream) {
   logInfo(std::string("onRequestHeaders ") + std::to_string(id()));
