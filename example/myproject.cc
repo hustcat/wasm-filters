@@ -3,6 +3,8 @@
 
 #include "proxy_wasm_intrinsics.h"
 
+/////// RootContext
+
 class ExampleRootContext : public RootContext {
  public:
   explicit ExampleRootContext(uint32_t id, std::string_view root_id)
@@ -10,6 +12,10 @@ class ExampleRootContext : public RootContext {
 
   bool onConfigure(size_t) override;
 };
+
+bool ExampleRootContext::onConfigure(size_t) { return true; }
+
+/////// Context
 
 class ExampleContext : public Context {
 public:
