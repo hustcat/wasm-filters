@@ -1,0 +1,56 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: example-filter
+  namespace: mesh-app
+spec:
+  configPatches:
+  - applyTo: HTTP_FILTER
+    match:
+      context: SIDECAR_INBOUND
+      listener:
+        filterChain:
+          filter:
+            name: envoy.filters.network.http_connection_manager
+            subFilter:
+              name: envoy.filters.http.router
+    patch:
+      operation: INSERT_BEFORE
+      value:
+        name: example-filter-config
+        config_discovery:
+          config_source:
+            ads: {}
+            initial_fetch_timeout: 0s
+          type_urls: [ "type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm"]
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: example-filter-config
+  namespace: mesh-app
+spec:
+  configPatches:
+  - applyTo: EXTENSION_CONFIG
+    match:
+      context: SIDECAR_INBOUND
+    patch:
+      operation: ADD
+      value:
+        name: example-filter-config
+        typed_config:
+          '@type': type.googleapis.com/udpa.type.v1.TypedStruct
+          type_url: type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm
+          value:
+            config:
+              vm_config:
+                code:
+                  remote:
+                    http_uri:
+                      uri: https://raw.githubusercontent.com/hustcat/wasm-filters/main/example/myproject.wasm
+                    # Optional: specifying checksum will let istio agent
+                    # verify the checksum of download artifacts. Missing
+                    # checksum will cause the Wasm module to be downloaded
+                    # repeatedly
+                    #sha256: 337da3a01cc9f46061f2d26bab4ec1ea3e049d9e723ef6d972fda3599ba57a37
+                runtime: envoy.wasm.runtime.v8
